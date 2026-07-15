@@ -566,7 +566,7 @@ async function sendLineNotify(text){
     return;
   }
   try{
-    const res = await fetch('https://api.line.me/v2/bot/message/push', {
+    const res = await fetch('https://line-notify-proxy.pongpat-sre7.workers.dev', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
