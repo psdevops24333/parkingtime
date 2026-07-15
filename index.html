@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>นับเวลาจอดรถ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --bg:#14171C;
+    --card:#1B1F26;
+    --card-2:#20242D;
+    --amber:#F5A623;
+    --amber-dim:#8A6316;
+    --text:#F2F1EA;
+    --muted:#8B92A0;
+    --red:#E5484D;
+    --green:#3DD68C;
+    --stripe-a:#F5A623;
+    --stripe-b:#14171C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans Thai',system-ui,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:28px 16px 60px;
+  }
+  .wrap{width:100%;max-width:460px;}
+  .barrier{
+    height:10px;
+    width:100%;
+    border-radius:6px;
+    background:repeating-linear-gradient(135deg,var(--stripe-a) 0 18px,var(--stripe-b) 18px 36px);
+    margin-bottom:22px;
+    opacity:.9;
+  }
+  header{margin-bottom:20px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    margin:0;
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-.01em;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid #2A2F39;
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    margin:0 0 14px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--muted);
+    letter-spacing:.02em;
+  }
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:none;
+    border-radius:12px;
+    padding:13px 18px;
+    font-size:15px;
+    font-weight:600;
+    transition:transform .12s ease, opacity .12s ease;
+  }
+  button:active{transform:scale(.97);}
+  .btn-primary{background:var(--amber);color:#1A1300;width:100%;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-ghost{background:var(--card-2);color:var(--text);border:1px solid #333947;width:100%;}
+  .btn-row{display:flex;gap:10px;}
+  .btn-row button{flex:1;}
+  #reader{border-radius:12px;overflow:hidden;margin-top:12px;}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  input[type=datetime-local], input[type=text], input[type=password]{
+    width:100%;
+    background:var(--card-2);
+    border:1px solid #333947;
+    border-radius:10px;
+    padding:11px 12px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+  }
+  input:focus{outline:2px solid var(--amber);outline-offset:1px;}
+  .scan-result{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--green);
+    word-break:break-all;
+    margin-top:10px;
+    background:var(--card-2);
+    padding:10px;
+    border-radius:8px;
+  }
+  .timer-hero{
+    text-align:center;
+    padding:8px 0 4px;
+  }
+  .timer-label{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .timer-value{
+    font-family:'JetBrains Mono',monospace;
+    font-size:52px;
+    font-weight:800;
+    letter-spacing:-.01em;
+    margin:6px 0 4px;
+    color:var(--amber);
+  }
+  .timer-value.done{color:var(--red);}
+  .timer-sub{color:var(--muted);font-size:13px;}
+  .status-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12px;font-weight:600;
+    padding:5px 10px;border-radius:999px;
+    background:var(--card-2);color:var(--muted);
+    margin-bottom:14px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+  .dot.on{background:var(--green);}
+  .dot.off{background:var(--red);}
+  .note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px;}
+  .toggle{
+    display:flex;justify-content:space-between;align-items:center;
+    cursor:pointer;
+  }
+  .chev{color:var(--muted);font-family:'JetBrains Mono',monospace;transition:transform .15s;}
+  .chev.open{transform:rotate(90deg);}
+  .collapse{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+  .collapse.open{max-height:600px;margin-top:14px;}
+  .msg{
+    font-size:13px;padding:10px 12px;border-radius:10px;margin-top:12px;
+  }
+  .msg.err{background:rgba(229,72,77,.12);color:#FF9B9E;border:1px solid rgba(229,72,77,.3);}
+  .msg.ok{background:rgba(61,214,140,.12);color:var(--green);border:1px solid rgba(61,214,140,.3);}
+  footer{text-align:center;color:var(--muted);font-size:11px;margin-top:26px;font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="barrier"></div>
+  <header>
+    <p class="eyebrow">Parking · เข้า + 3 ชั่วโมง</p>
+    <h1>นับเวลาจอดรถ</h1>
+  </header>
+
+  <div class="card">
+    <h2>สแกน QR ตั๋วจอดรถ</h2>
+    <div class="btn-row">
+      <button class="btn-ghost" id="scanBtn">เปิดกล้องสแกน QR</button>
+      <button class="btn-ghost" id="uploadBtn">อัปโหลดรูป QR</button>
+    </div>
+    <input type="file" id="qrFile" accept="image/*" style="display:none;">
+    <div id="reader" style="display:none;"></div>
+    <div id="scanResult" class="scan-result" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <h2>เวลาเข้าจอด</h2>
+    <div class="field">
+      <label for="entryTime">วันเวลาเข้า</label>
+      <input type="datetime-local" id="entryTime">
+    </div>
+    <div class="btn-row">
+      <button class="btn-ghost" id="nowBtn">ใช้เวลาปัจจุบัน</button>
+      <button class="btn-primary" id="startBtn">เริ่มนับเวลา</button>
+    </div>
+  </div>
+
+  <div class="card" id="timerCard" style="display:none;">
+    <div class="status-pill"><span class="dot" id="timerDot"></span><span id="timerStatus">กำลังนับเวลา</span></div>
+    <div class="timer-hero">
+      <div class="timer-label">เหลือเวลาอีก</div>
+      <div class="timer-value" id="timerValue">--:--:--</div>
+      <div class="timer-sub" id="timerSub">ครบกำหนด —</div>
+    </div>
+    <button class="btn-ghost" id="stopBtn" style="margin-top:10px;">ยกเลิกตัวจับเวลา</button>
+  </div>
+
+  <div class="card">
+    <div class="toggle" id="ghToggle">
+      <h2 style="margin:0;">เชื่อมต่อ GitHub (แจ้งเตือนแม้ปิดแท็บ)</h2>
+      <span class="chev" id="ghChev">›</span>
+    </div>
+    <div class="collapse" id="ghCollapse">
+      <div class="field">
+        <label for="ghOwner">GitHub username / organization</label>
+        <input type="text" id="ghOwner" placeholder="เช่น your-username">
+      </div>
+      <div class="field">
+        <label for="ghRepo">ชื่อ repo</label>
+        <input type="text" id="ghRepo" placeholder="เช่น parking-timer">
+      </div>
+      <div class="field">
+        <label for="ghBranch">Branch</label>
+        <input type="text" id="ghBranch" placeholder="main" value="main">
+      </div>
+      <div class="field">
+        <label for="ghToken">Personal Access Token (fine-grained, สิทธิ์ Contents: Read/Write เฉพาะ repo นี้)</label>
+        <input type="password" id="ghToken" placeholder="github_pat_...">
+      </div>
+      <button class="btn-ghost" id="saveGhBtn">บันทึกการตั้งค่า</button>
+      <div id="ghMsg"></div>
+      <p class="note">
+        เมื่อกด "เริ่มนับเวลา" แอปจะเขียนเวลาครบกำหนดลงไฟล์ <code>data/state.json</code> ใน repo นี้ผ่าน GitHub API
+        แล้ว GitHub Actions ใน repo จะคอยเช็คทุก ~5 นาทีและยิงข้อความ LINE ให้เองแม้ปิดแท็บนี้ไปแล้ว
+        (ต้องตั้งค่า secrets <code>LINE_CHANNEL_TOKEN</code> และ <code>LINE_USER_ID</code> ใน repo ตามคำแนะนำใน README ก่อน)
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toggle" id="lineToggle">
+      <h2 style="margin:0;">ตั้งค่าแจ้งเตือน LINE</h2>
+      <span class="chev" id="lineChev">›</span>
+    </div>
+    <div class="collapse" id="lineCollapse">
+      <div class="field">
+        <label for="lineToken">Channel Access Token (Messaging API)</label>
+        <input type="password" id="lineToken" placeholder="วางโทเค็นที่นี่">
+      </div>
+      <div class="field">
+        <label for="lineUserId">LINE User ID ผู้รับ</label>
+        <input type="text" id="lineUserId" placeholder="U1234567890abcdef...">
+      </div>
+      <button class="btn-ghost" id="saveLineBtn">บันทึกการตั้งค่า</button>
+      <button class="btn-ghost" id="testLineBtn" style="margin-top:8px;">ทดสอบส่งข้อความ</button>
+      <div id="lineMsg"></div>
+      <p class="note">
+        การส่ง LINE อัตโนมัติแม้ปิดแท็บทำผ่าน GitHub Actions (ตั้งค่าด้านล่าง) โดยใช้ token/user id นี้เป็น GitHub Secrets ไม่ใช่กรอกที่นี่โดยตรง
+        ปุ่ม "ทดสอบส่งข้อความ" ด้านล่างนี้ใช้ทดสอบจากเบราว์เซอร์เท่านั้น (มักติด CORS) ไม่เกี่ยวกับระบบอัตโนมัติจริง
+      </p>
+    </div>
+  </div>
+
+  <footer>PARKING TIMER · เก็บข้อมูลไว้ในเครื่องนี้เท่านั้น</footer>
+</div>
+
+<audio id="alarmSound" preload="auto">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let countdownTimer = null;
+let targetTime = null;
+let alerted = false;
+
+// ---------- storage helpers (persistent, personal) ----------
+let storageOk = true;
+
+async function saveState(){
+  if(!storageOk) return;
+  try{
+    await window.storage.set('parking-state', JSON.stringify({
+      entryTime: $('entryTime').value,
+      targetTime: targetTime ? targetTime.toISOString() : null
+    }), false);
+  }catch(e){ storageOk = false; console.warn('local save unavailable, continuing without persistence', e); }
+}
+async function saveLineConfig(){
+  if(!storageOk) return;
+  try{
+    await window.storage.set('line-config', JSON.stringify({
+      token: $('lineToken').value,
+      userId: $('lineUserId').value
+    }), false);
+  }catch(e){ storageOk = false; console.warn('local save unavailable, continuing without persistence', e); }
+}
+async function saveGhConfig(){
+  if(!storageOk) return;
+  try{
+    await window.storage.set('gh-config', JSON.stringify({
+      owner: $('ghOwner').value.trim(),
+      repo: $('ghRepo').value.trim(),
+      branch: $('ghBranch').value.trim() || 'main',
+      token: $('ghToken').value.trim()
+    }), false);
+  }catch(e){ storageOk = false; console.warn('local save unavailable, continuing without persistence', e); }
+}
+async function loadAll(){
+  try{
+    const s = await window.storage.get('parking-state', false);
+    if(s && s.value){
+      const data = JSON.parse(s.value);
+      if(data.entryTime) $('entryTime').value = data.entryTime;
+      if(data.targetTime){
+        targetTime = new Date(data.targetTime);
+        if(targetTime > new Date()){
+          showTimerCard();
+          tick();
+          countdownTimer = setInterval(tick, 1000);
+        }
+      }
+    }
+  }catch(e){ /* no saved state yet, or storage unavailable */ }
+  try{
+    const c = await window.storage.get('line-config', false);
+    if(c && c.value){
+      const cfg = JSON.parse(c.value);
+      $('lineToken').value = cfg.token || '';
+      $('lineUserId').value = cfg.userId || '';
+    }
+  }catch(e){ /* no saved config yet, or storage unavailable */ }
+  try{
+    const g = await window.storage.get('gh-config', false);
+    if(g && g.value){
+      const cfg = JSON.parse(g.value);
+      $('ghOwner').value = cfg.owner || '';
+      $('ghRepo').value = cfg.repo || '';
+      $('ghBranch').value = cfg.branch || 'main';
+      $('ghToken').value = cfg.token || '';
+    }
+  }catch(e){ /* no saved config yet, or storage unavailable */ }
+}
+loadAll();
+
+// ---------- default entry time = now ----------
+function toLocalInputValue(d){
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+if(!$('entryTime').value) $('entryTime').value = toLocalInputValue(new Date());
+
+$('nowBtn').onclick = () => { $('entryTime').value = toLocalInputValue(new Date()); };
+
+// ---------- QR scanner ----------
+let qrScanner = null;
+$('scanBtn').onclick = () => {
+  const reader = $('reader');
+  if(qrScanner){
+    qrScanner.stop().then(()=>{ qrScanner=null; reader.style.display='none'; $('scanBtn').textContent='เปิดกล้องสแกน QR'; });
+    return;
+  }
+  reader.style.display='block';
+  $('scanBtn').textContent='ปิดกล้อง';
+  qrScanner = new Html5Qrcode("reader");
+  qrScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 220 },
+    (decodedText) => {
+      $('scanResult').style.display='block';
+      $('scanResult').textContent = 'สแกนได้: ' + decodedText;
+      // ตั๋วจอดไม่ได้ฝังเวลาเข้าไว้ใน QR โดยตรง — ใช้เวลาปัจจุบันเป็นค่าเริ่มต้น แก้ไขได้ที่ช่องด้านล่าง
+      $('entryTime').value = toLocalInputValue(new Date());
+      qrScanner.stop().then(()=>{ qrScanner=null; reader.style.display='none'; $('scanBtn').textContent='เปิดกล้องสแกน QR'; });
+    },
+    () => {}
+  ).catch((err) => {
+    reader.style.display='none';
+    $('scanBtn').textContent='เปิดกล้องสแกน QR';
+    qrScanner = null;
+    $('scanResult').style.display='block';
+    const msg = String(err);
+    if(msg.includes('NotAllowedError') || msg.includes('not allowed')){
+      $('scanResult').textContent = 'ไม่ได้รับอนุญาตให้ใช้กล้อง (มักเกิดจากสิทธิ์กล้องของแอปเบราว์เซอร์/Claude) — ลองกด "อัปโหลดรูป QR" แทน หรือเปิดสิทธิ์กล้องในการตั้งค่าของแอป/เบราว์เซอร์แล้วลองใหม่';
+    }else{
+      $('scanResult').textContent = 'เปิดกล้องไม่สำเร็จ: ' + msg + ' — ลองกด "อัปโหลดรูป QR" แทน';
+    }
+  });
+};
+
+$('uploadBtn').onclick = () => $('qrFile').click();
+$('qrFile').onchange = (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const tempScanner = new Html5Qrcode("reader");
+  tempScanner.scanFile(file, true)
+    .then((decodedText) => {
+      $('scanResult').style.display='block';
+      $('scanResult').textContent = 'สแกนได้จากรูป: ' + decodedText;
+      $('entryTime').value = toLocalInputValue(new Date());
+    })
+    .catch((err) => {
+      $('scanResult').style.display='block';
+      $('scanResult').textContent = 'อ่าน QR จากรูปไม่สำเร็จ: ' + err;
+    })
+    .finally(() => { e.target.value = ''; });
+};
+
+// ---------- GitHub sync (background notification via Actions) ----------
+$('ghToggle').onclick = () => {
+  $('ghCollapse').classList.toggle('open');
+  $('ghChev').classList.toggle('open');
+};
+$('saveGhBtn').onclick = () => {
+  saveGhConfig();
+  $('ghMsg').innerHTML = '<div class="msg ok">บันทึกการตั้งค่า GitHub แล้ว</div>';
+};
+
+function getGhConfig(){
+  return {
+    owner: $('ghOwner').value.trim(),
+    repo: $('ghRepo').value.trim(),
+    branch: $('ghBranch').value.trim() || 'main',
+    token: $('ghToken').value.trim()
+  };
+}
+
+async function syncStateToGithub(active, targetIso, notified){
+  const cfg = getGhConfig();
+  const msgBox = $('ghMsg');
+  if(!cfg.owner || !cfg.repo || !cfg.token){
+    if(active) msgBox.innerHTML = '<div class="msg err">ยังไม่ได้ตั้งค่า GitHub (owner/repo/token) — ตัวจับเวลาจะทำงานเฉพาะตอนเปิดแท็บนี้เท่านั้น</div>';
+    return;
+  }
+  const path = 'data/state.json';
+  const apiUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`;
+  try{
+    let sha = null;
+    const getRes = await fetch(`${apiUrl}?ref=${encodeURIComponent(cfg.branch)}`, {
+      headers: { 'Authorization': 'Bearer ' + cfg.token, 'Accept': 'application/vnd.github+json' }
+    });
+    if(getRes.ok){
+      const getData = await getRes.json();
+      sha = getData.sha;
+    }else if(getRes.status !== 404){
+      const body = await getRes.text();
+      throw new Error('GET HTTP ' + getRes.status + ' ' + body);
+    }
+
+    const content = {
+      active,
+      target_time: targetIso,
+      notified,
+      updated_at: new Date().toISOString()
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2) + '\n')));
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + cfg.token,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: active ? 'start parking timer' : 'stop parking timer',
+        content: encoded,
+        branch: cfg.branch,
+        ...(sha ? { sha } : {})
+      })
+    });
+    if(putRes.ok){
+      msgBox.innerHTML = `<div class="msg ok">ซิงก์กับ GitHub สำเร็จ — GitHub Actions จะแจ้งเตือน LINE ให้แม้ปิดแท็บนี้</div>`;
+    }else{
+      const body = await putRes.text();
+      throw new Error('PUT HTTP ' + putRes.status + ' ' + body);
+    }
+  }catch(err){
+    msgBox.innerHTML = `<div class="msg err">ซิงก์กับ GitHub ไม่สำเร็จ: ${String(err.message || err)}<br>ตรวจสอบ owner/repo/branch และสิทธิ์ของ token (ต้องมี Contents: Read and write)</div>`;
+    console.error(err);
+  }
+}
+
+
+function showTimerCard(){ $('timerCard').style.display='block'; }
+
+function fmt(ms){
+  if(ms < 0) ms = 0;
+  const total = Math.floor(ms/1000);
+  const h = String(Math.floor(total/3600)).padStart(2,'0');
+  const m = String(Math.floor((total%3600)/60)).padStart(2,'0');
+  const s = String(total%60).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+function tick(){
+  const now = new Date();
+  const diff = targetTime - now;
+  $('timerValue').textContent = fmt(diff);
+  $('timerSub').textContent = 'ครบกำหนด ' + targetTime.toLocaleString('th-TH');
+  if(diff <= 0 && !alerted){
+    alerted = true;
+    $('timerValue').classList.add('done');
+    $('timerDot').className = 'dot off';
+    $('timerStatus').textContent = 'ครบกำหนดเวลาแล้ว';
+    fireAlert();
+  }
+}
+
+$('startBtn').onclick = () => {
+  const val = $('entryTime').value;
+  if(!val){ alert('กรุณาระบุเวลาเข้าจอด'); return; }
+  const entry = new Date(val);
+  targetTime = new Date(entry.getTime() + 3*60*60*1000);
+  alerted = false;
+  $('timerValue').classList.remove('done');
+  $('timerDot').className = 'dot on';
+  $('timerStatus').textContent = 'กำลังนับเวลา';
+  showTimerCard();
+  if(countdownTimer) clearInterval(countdownTimer);
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+  saveState();
+  syncStateToGithub(true, targetTime.toISOString(), false);
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+};
+
+$('stopBtn').onclick = () => {
+  if(countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = null;
+  targetTime = null;
+  alerted = false;
+  $('timerCard').style.display='none';
+  saveState();
+  syncStateToGithub(false, null, false);
+};
+
+// ---------- alert when time's up ----------
+function fireAlert(){
+  try{ $('alarmSound').play().catch(()=>{}); }catch(e){}
+  if('Notification' in window && Notification.permission === 'granted'){
+    new Notification('ครบกำหนดเวลาจอดรถแล้ว', { body: 'ครบ 3 ชั่วโมงตามเวลาที่ตั้งไว้ กรุณาตรวจสอบรถของคุณ' });
+  }
+  sendLineNotify('⏰ ครบกำหนดเวลาจอดรถแล้ว (3 ชั่วโมง) กรุณาตรวจสอบรถของคุณ');
+}
+
+// ---------- LINE Messaging API ----------
+$('lineToggle').onclick = () => {
+  $('lineCollapse').classList.toggle('open');
+  $('lineChev').classList.toggle('open');
+};
+$('saveLineBtn').onclick = () => {
+  saveLineConfig();
+  $('lineMsg').innerHTML = '<div class="msg ok">บันทึกการตั้งค่าแล้ว</div>';
+};
+$('testLineBtn').onclick = () => sendLineNotify('🔔 ทดสอบการแจ้งเตือนจากแอปนับเวลาจอดรถ');
+
+async function sendLineNotify(text){
+  const token = $('lineToken').value.trim();
+  const userId = $('lineUserId').value.trim();
+  const msgBox = $('lineMsg');
+  if(!token || !userId){
+    msgBox.innerHTML = '<div class="msg err">ยังไม่ได้ตั้งค่า Channel Access Token หรือ User ID</div>';
+    return;
+  }
+  try{
+    const res = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ to: userId, messages: [{ type: 'text', text }] })
+    });
+    if(res.ok){
+      msgBox.innerHTML = '<div class="msg ok">ส่งข้อความไปยัง LINE สำเร็จ</div>';
+    }else{
+      const body = await res.text();
+      throw new Error('HTTP ' + res.status + ' ' + body);
+    }
+  }catch(err){
+    msgBox.innerHTML = `<div class="msg err">
+      ส่งผ่าน LINE โดยตรงจากเบราว์เซอร์ไม่สำเร็จ (มักติด CORS ของ LINE API)<br>
+      ข้อความที่ควรส่ง: “${text}”<br>
+      แนะนำ: ตั้ง Cloudflare Worker หรือ Google Apps Script เป็นตัวกลาง (proxy) รับคำขอจากหน้านี้แล้วค่อยยิงต่อไปยัง LINE API ฝั่งเซิร์ฟเวอร์ — บอกได้เลยถ้าต้องการให้ช่วยเขียนโค้ดตัวกลางนี้
+    </div>`;
+    console.error(err);
+  }
+}
+</script>
+</body>
+</html>
