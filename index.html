@@ -275,42 +275,37 @@ let targetTime = null;
 let alerted = false;
 
 // ---------- storage helpers (persistent, personal) ----------
-let storageOk = true;
-
-async function saveState(){
-  if(!storageOk) return;
+function saveState(){
   try{
-    await window.storage.set('parking-state', JSON.stringify({
+    localStorage.setItem('parking-state', JSON.stringify({
       entryTime: $('entryTime').value,
       targetTime: targetTime ? targetTime.toISOString() : null
-    }), false);
-  }catch(e){ storageOk = false; console.warn('local save unavailable, continuing without persistence', e); }
+    }));
+  }catch(e){ console.warn('local save unavailable', e); }
 }
-async function saveLineConfig(){
-  if(!storageOk) return;
+function saveLineConfig(){
   try{
-    await window.storage.set('line-config', JSON.stringify({
+    localStorage.setItem('line-config', JSON.stringify({
       token: $('lineToken').value,
       userId: $('lineUserId').value
-    }), false);
-  }catch(e){ storageOk = false; console.warn('local save unavailable, continuing without persistence', e); }
+    }));
+  }catch(e){ console.warn('local save unavailable', e); }
 }
-async function saveGhConfig(){
-  if(!storageOk) return;
+function saveGhConfig(){
   try{
-    await window.storage.set('gh-config', JSON.stringify({
+    localStorage.setItem('gh-config', JSON.stringify({
       owner: $('ghOwner').value.trim(),
       repo: $('ghRepo').value.trim(),
       branch: $('ghBranch').value.trim() || 'main',
       token: $('ghToken').value.trim()
-    }), false);
-  }catch(e){ storageOk = false; console.warn('local save unavailable, continuing without persistence', e); }
+    }));
+  }catch(e){ console.warn('local save unavailable', e); }
 }
-async function loadAll(){
+function loadAll(){
   try{
-    const s = await window.storage.get('parking-state', false);
-    if(s && s.value){
-      const data = JSON.parse(s.value);
+    const s = localStorage.getItem('parking-state');
+    if(s){
+      const data = JSON.parse(s);
       if(data.entryTime) $('entryTime').value = data.entryTime;
       if(data.targetTime){
         targetTime = new Date(data.targetTime);
@@ -321,25 +316,25 @@ async function loadAll(){
         }
       }
     }
-  }catch(e){ /* no saved state yet, or storage unavailable */ }
+  }catch(e){ }
   try{
-    const c = await window.storage.get('line-config', false);
-    if(c && c.value){
-      const cfg = JSON.parse(c.value);
+    const c = localStorage.getItem('line-config');
+    if(c){
+      const cfg = JSON.parse(c);
       $('lineToken').value = cfg.token || '';
       $('lineUserId').value = cfg.userId || '';
     }
-  }catch(e){ /* no saved config yet, or storage unavailable */ }
+  }catch(e){ }
   try{
-    const g = await window.storage.get('gh-config', false);
-    if(g && g.value){
-      const cfg = JSON.parse(g.value);
+    const g = localStorage.getItem('gh-config');
+    if(g){
+      const cfg = JSON.parse(g);
       $('ghOwner').value = cfg.owner || '';
       $('ghRepo').value = cfg.repo || '';
       $('ghBranch').value = cfg.branch || 'main';
       $('ghToken').value = cfg.token || '';
     }
-  }catch(e){ /* no saved config yet, or storage unavailable */ }
+  }catch(e){ }
 }
 loadAll();
 
