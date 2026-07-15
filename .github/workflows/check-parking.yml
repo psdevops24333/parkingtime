@@ -1,1 +1,30 @@
+name: Parking Timer Check
 
+on:
+  schedule:
+    # runs every 5 minutes — GitHub may delay this a few minutes under load
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check timer and send LINE push if due
+        env:
+          LINE_TOKEN: ${{ secrets.LINE_CHANNEL_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: python3 check_and_notify.py
+
+      - name: Commit state changes
+        run: |
+          git config user.name "parking-timer-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/state.json
+          git diff --staged --quiet || git commit -m "update parking timer state [skip ci]"
+          git push
